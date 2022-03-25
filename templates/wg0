@@ -1,0 +1,6 @@
+auto wg0
+iface wg0 inet static
+    address 192.168.255.1/24
+    pre-up ip link add wg0 type wireguard
+    pre-up wg setconf wg0 /etc/wireguard/server.conf
+    post-up iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o ${eni_if} -j MASQUERADE
