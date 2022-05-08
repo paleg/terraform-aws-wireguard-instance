@@ -92,6 +92,8 @@ resource "aws_key_pair" "vpn" {
 
 resource "aws_launch_template" "this" {
   name     = var.name
+  description = "Launch template for WireGuard instance ${var.name}"
+
   image_id = data.aws_ami.this.id
   key_name = var.pub_key != null ? aws_key_pair.vpn[0].id : null
 
@@ -107,50 +109,7 @@ resource "aws_launch_template" "this" {
     delete_on_termination       = true
   }
 
-  user_data = base64encode(join("\n", [
-    "#cloud-config",
-    yamlencode({
-      write_files : [
-        {
-          path : "/tmp/configure.sh",
-          content : templatefile(
-            "${path.module}/templates/configure.sh",
-            {
-              eni_id     = aws_network_interface.this.id,
-              eni_if     = "ens6",
-              aws_region = data.aws_region.current.name,
-            }
-          ),
-          permissions : "0755",
-        },
-        {
-          path : "/etc/network/interfaces.d/wg0",
-          content : templatefile(
-            "${path.module}/templates/wg0",
-            {
-              eni_if = "ens6",
-            }
-          ),
-          permissions : "0755",
-        },
-        {
-          path : "/etc/wireguard/server.conf",
-          content : templatefile(
-            "${path.module}/templates/server.conf",
-            {
-              server_private_key = var.wireguard_private_key,
-              server_port        = var.wireguard_port,
-              peers              = var.wireguard_peers,
-            }
-          ),
-          permissions : "0755",
-        },
-      ],
-      runcmd : ["/tmp/configure.sh"]
-    })
-  ]))
-
-  description = "Launch template for WireGuard instance ${var.name}"
+  user_data   = data.cloudinit_config.this.rendered
 }
 
 resource "aws_autoscaling_group" "this" {
