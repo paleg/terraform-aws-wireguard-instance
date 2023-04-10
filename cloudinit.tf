@@ -14,25 +14,26 @@ locals {
   configure_sh = templatefile(
     "${path.module}/templates/configure.sh",
     {
-      eni_id     = aws_network_interface.this.id,
-      eni_if     = "ens6",
-      aws_region = data.aws_region.current.name,
+      eni_id     = aws_network_interface.this.id
+      eni_if     = "ens6"
+      aws_region = data.aws_region.current.name
     }
   )
 
   wg0 = templatefile(
     "${path.module}/templates/wg0",
     {
-      eni_if = "ens6",
+      eni_if                = "ens6"
+      wireguard_wg0_address = var.wireguard_wg0_address
     }
   )
 
   server_conf = templatefile(
     "${path.module}/templates/server.conf",
     {
-      server_private_key = var.wireguard_private_key,
-      server_port        = var.wireguard_port,
-      peers              = var.wireguard_peers,
+      server_private_key = var.wireguard_private_key
+      server_port        = var.wireguard_port
+      peers              = var.wireguard_peers
     }
   )
 }

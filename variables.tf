@@ -61,6 +61,10 @@ variable "wireguard_private_key" {
   type = string
 }
 
+variable "wireguard_wg0_address" {
+  type = string
+}
+
 variable "wireguard_peers" {
   type = list(object({
     name       = string
