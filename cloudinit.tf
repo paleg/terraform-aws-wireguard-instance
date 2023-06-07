@@ -43,44 +43,23 @@ data "cloudinit_config" "this" {
   base64_encode = true
 
   part {
-    content_type = "text/x-shellscript"
-    content      = <<EOF
-#!/bin/bash
-
-set -x
-
-umask 077
-rm /etc/ssh/*.pub
-rm /etc/ssh/ssh_host_dsa_key
-echo '${tls_private_key.host_ecdsa.private_key_pem}' >/etc/ssh/ssh_host_ecdsa_key
-echo '${tls_private_key.host_ed25519.private_key_pem}' >/etc/ssh/ssh_host_ed25519_key
-echo '${tls_private_key.host_rsa.private_key_pem}' >/etc/ssh/ssh_host_rsa_key
-systemctl restart sshd
-EOF
-  }
-
-  part {
     content_type = "text/cloud-config"
-    content      = yamlencode(
-{
-  write_files: [
-    {
-      path: "/tmp/configure.sh",
-      content: local.configure_sh,
-      permissions: "0755"
-    },
-    {
-      path: "/etc/network/interfaces.d/wg0"
-      content: local.wg0,
-      permissions: "0755",
-    },
-    {
-      path: "/etc/wireguard/server.conf",
-      content: local.server_conf,
-      permissions: "0755",
-    }
-  ]
-}
+    content = templatefile(
+      "${path.module}/templates/cloud-config.yaml",
+      {
+        ssh_keys : {
+          rsa_private     = tls_private_key.host_rsa.private_key_pem
+          rsa_public      = tls_private_key.host_rsa.public_key_openssh
+          ecdsa_private   = tls_private_key.host_ecdsa.private_key_pem
+          ecdsa_public    = tls_private_key.host_ecdsa.public_key_openssh
+          ed25519_private = tls_private_key.host_ed25519.private_key_pem
+          ed25519_public  = tls_private_key.host_ed25519.public_key_openssh
+        }
+        ssh_authorized_keys : var.ssh_authorized_keys
+        configure_sh : local.configure_sh
+        wireguard_wg0_conf : local.wg0
+        wireguard_server_conf : local.server_conf
+      }
     )
   }
 

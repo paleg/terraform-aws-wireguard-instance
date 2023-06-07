@@ -1,0 +1,22 @@
+ssh_keys: ${jsonencode(ssh_keys)}
+
+%{ if length(ssh_authorized_keys) > 0 ~}
+ssh_authorized_keys: ${jsonencode(ssh_authorized_keys)}
+%{ endif ~}
+
+ssh_genkeytypes: []
+ssh_deletekeys: true
+
+write_files:
+  - path: /tmp/configure.sh
+    content: |
+      ${indent(6, configure_sh)}
+    permissions: '0755'
+  - path: /etc/network/interfaces.d/wg0
+    content: |
+      ${indent(6, wireguard_wg0_conf)}
+    permissions: '0755'
+  - path: /etc/wireguard/server.conf
+    content: |
+      ${indent(6, wireguard_server_conf)}
+    permissions: '0755'

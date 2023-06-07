@@ -17,6 +17,11 @@ variable "pub_key" {
   default = null
 }
 
+variable "ssh_authorized_keys" {
+  type    = list(string)
+  default = []
+}
+
 variable "admin_locations" {
   type = list(string)
 }
