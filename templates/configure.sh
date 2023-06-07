@@ -3,6 +3,12 @@
 apt-get update
 apt-get install -y awscli jq locales-all netcat
 
+if ! dpkg -s amazon-ssm-agent &> /dev/null; then
+  wget --quiet https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_$(dpkg --print-architecture)/amazon-ssm-agent.deb
+  dpkg -i amazon-ssm-agent.deb
+  rm -fv amazon-ssm-agent.deb
+fi
+
 export AWS_DEFAULT_REGION=${aws_region}
 export regular_if=ens5
 export eip_if=${eni_if}
