@@ -73,13 +73,15 @@ resource "aws_eip" "this" {
   }
 }
 
-data "aws_ami" "this" {
+data "aws_ami" "_" {
+  for_each = var.instances
+
   owners      = [var.ami_owner]
   most_recent = true
 
   filter {
     name   = "name"
-    values = [var.ami_filter]
+    values = [each.value.ami_filter]
   }
 }
 
@@ -90,11 +92,13 @@ resource "aws_key_pair" "vpn" {
   public_key = var.pub_key
 }
 
-resource "aws_launch_template" "this" {
-  name     = var.name
-  description = "Launch template for WireGuard instance ${var.name}"
+resource "aws_launch_template" "_" {
+  for_each = var.instances
 
-  image_id = data.aws_ami.this.id
+  name        = "${var.name}-${each.key}"
+  description = "Launch template for WireGuard instance ${var.name} (${each.key})"
+
+  image_id = data.aws_ami._[each.key].id
   key_name = var.pub_key != null ? aws_key_pair.vpn[0].id : null
 
   update_default_version = true
@@ -109,7 +113,7 @@ resource "aws_launch_template" "this" {
     delete_on_termination       = true
   }
 
-  user_data   = data.cloudinit_config.this.rendered
+  user_data = data.cloudinit_config.this.rendered
 }
 
 resource "aws_autoscaling_group" "this" {
@@ -126,13 +130,22 @@ resource "aws_autoscaling_group" "this" {
     }
     launch_template {
       launch_template_specification {
-        launch_template_id = aws_launch_template.this.id
-        version            = aws_launch_template.this.latest_version
+        launch_template_id = aws_launch_template._[keys(var.instances)[0]].id
+        version            = aws_launch_template._[keys(var.instances)[0]].latest_version
       }
       dynamic "override" {
-        for_each = var.instance_types
+        for_each = merge(flatten([for arch, props in var.instances : [
+          for instance_type in props.instance_types : {
+            (instance_type) : arch
+          }
+          ]
+        ])...)
         content {
-          instance_type = override.value
+          instance_type = override.key
+
+          launch_template_specification {
+            launch_template_id = aws_launch_template._[override.value].id
+          }
         }
       }
     }

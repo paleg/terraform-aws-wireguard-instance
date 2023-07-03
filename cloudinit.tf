@@ -1,6 +1,6 @@
 resource "tls_private_key" "host_rsa" {
   algorithm = "RSA"
-  rsa_bits = 4096
+  rsa_bits  = 4096
 }
 resource "tls_private_key" "host_ecdsa" {
   algorithm = "ECDSA"
@@ -65,7 +65,7 @@ data "cloudinit_config" "this" {
 
   part {
     content_type = "text/cloud-config"
-    content = <<EOF
+    content      = <<EOF
 runcmd:
   - ["/tmp/configure.sh"]
 EOF
