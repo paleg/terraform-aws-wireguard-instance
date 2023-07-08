@@ -18,45 +18,8 @@ data "aws_subnets" "this" {
   }
 }
 
-resource "aws_security_group" "this" {
-  name        = var.name
-  vpc_id      = var.vpc_id != null ? var.vpc_id : data.aws_vpc.default.id
-  description = "Security group for WireGuard instance ${var.name}"
-
-  tags = {
-    Name = var.name
-  }
-}
-
-resource "aws_security_group_rule" "egress" {
-  security_group_id = aws_security_group.this.id
-  type              = "egress"
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "all"
-}
-
-resource "aws_security_group_rule" "ingress_wireguard" {
-  security_group_id = aws_security_group.this.id
-  type              = "ingress"
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = var.wireguard_port
-  to_port           = var.wireguard_port
-  protocol          = "udp"
-}
-
-resource "aws_security_group_rule" "ingress_ssh" {
-  security_group_id = aws_security_group.this.id
-  type              = "ingress"
-  cidr_blocks       = var.admin_locations
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-}
-
 resource "aws_network_interface" "this" {
-  security_groups = [aws_security_group.this.id]
+  security_groups = [module.security_group.security_group_id]
   subnet_id       = var.subnet_id != null ? var.subnet_id : data.aws_subnets.this.ids[0]
   description     = "ENI for ${var.name} WireGuard instance"
 
@@ -109,7 +72,7 @@ resource "aws_launch_template" "_" {
 
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = [aws_security_group.this.id]
+    security_groups             = [module.security_group.security_group_id]
     delete_on_termination       = true
   }
 

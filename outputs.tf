@@ -1,5 +1,5 @@
 output "security_group_id" {
-  value = aws_security_group.this.id
+  value = module.security_group.security_group_id
 }
 
 output "eip_public_address" {
