@@ -1,3 +1,4 @@
+data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_default_tags" "this" {}
@@ -67,7 +68,7 @@ resource "aws_launch_template" "_" {
   update_default_version = true
 
   iam_instance_profile {
-    arn = aws_iam_instance_profile.this.arn
+    arn = module.iam_role.iam_instance_profile_arn
   }
 
   network_interfaces {
@@ -137,51 +138,4 @@ resource "aws_autoscaling_group" "this" {
       propagate_at_launch = true
     }
   }
-}
-
-resource "aws_iam_instance_profile" "this" {
-  name = var.name
-  role = aws_iam_role.this.name
-}
-
-resource "aws_iam_role" "this" {
-  name               = var.name
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy_attachment" "ssm" {
-  policy_arn = var.ssm_policy_arn
-  role       = aws_iam_role.this.name
-}
-
-resource "aws_iam_role_policy" "eni" {
-  role   = aws_iam_role.this.name
-  name   = var.name
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:AttachNetworkInterface"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
 }

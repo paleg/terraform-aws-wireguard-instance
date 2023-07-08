@@ -59,12 +59,6 @@ variable "use_spot_instance" {
   default     = true
 }
 
-variable "ssm_policy_arn" {
-  description = "SSM Policy to be attached to instance profile"
-  type        = string
-  default     = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
 variable "wireguard_port" {
   type    = number
   default = 55820
