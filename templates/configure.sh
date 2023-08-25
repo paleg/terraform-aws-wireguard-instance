@@ -51,4 +51,6 @@ apt-get install -y linux-headers-$kernel_suffix wireguard
 modprobe wireguard
 sysctl net.ipv4.ip_forward=1
 
+aws secretsmanager get-secret-value --secret-id ${server_conf_secret_name} --query SecretString --output text > ${server_conf_path}
+
 ifup wg0

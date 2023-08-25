@@ -25,7 +25,7 @@ resource "aws_iam_policy" "eni" {
 
 data "aws_iam_policy_document" "eni" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "ec2:AttachNetworkInterface"
     ]
@@ -34,7 +34,7 @@ data "aws_iam_policy_document" "eni" {
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "ec2:AttachNetworkInterface"
     ]
@@ -49,19 +49,4 @@ data "aws_iam_policy_document" "eni" {
       ]
     }
   }
-}
-
-moved {
-  from = aws_iam_role.this
-  to   = module.iam_role.aws_iam_role.this[0]
-}
-
-moved {
-  from = aws_iam_instance_profile.this
-  to   = module.iam_role.aws_iam_instance_profile.this[0]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.ssm
-  to   = module.iam_role.aws_iam_role_policy_attachment.custom[0]
 }

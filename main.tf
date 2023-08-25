@@ -78,6 +78,12 @@ resource "aws_launch_template" "_" {
   }
 
   user_data = data.cloudinit_config.this.rendered
+
+  lifecycle {
+    ignore_changes = [
+      image_id,
+    ]
+  }
 }
 
 resource "aws_autoscaling_group" "this" {
@@ -137,5 +143,64 @@ resource "aws_autoscaling_group" "this" {
       value               = tag.value
       propagate_at_launch = true
     }
+  }
+}
+
+module "secretsmanager_secret_server_conf" {
+  source  = "terraform-aws-modules/secrets-manager/aws"
+  version = "~> 1.1"
+
+  name          = local.server_conf_secret_name
+  secret_string = local.server_conf
+
+  create_policy       = true
+  block_public_policy = true
+  policy_statements = {
+    read = {
+      sid = "AllowEc2Read"
+      principals = [{
+        type        = "AWS"
+        identifiers = [module.iam_role.iam_role_arn]
+      }]
+      actions   = ["secretsmanager:GetSecretValue"]
+      resources = ["*"]
+    }
+  }
+}
+
+resource "aws_ssm_document" "update_peers" {
+  name          = "${var.name}-update-peers"
+  document_type = "Command"
+
+  target_type = "/AWS::EC2::Instance"
+
+  content = templatefile(
+    "${path.module}/templates/update-peers.tftpl.json",
+    {
+      server_conf_secret_name : module.secretsmanager_secret_server_conf.secret_id
+      server_conf_path : local.server_conf_path
+      aws_region : data.aws_region.current.name
+    }
+  )
+}
+
+resource "terraform_data" "server_conf" {
+  input = md5(local.server_conf)
+}
+
+resource "aws_ssm_association" "update_peers" {
+  association_name = "${var.name}-update-peers"
+  name             = aws_ssm_document.update_peers.name
+
+  targets {
+    key    = "tag:aws:autoscaling:groupName"
+    values = [aws_autoscaling_group.this.name]
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      aws_ssm_document.update_peers.latest_version,
+      terraform_data.server_conf.input,
+    ]
   }
 }

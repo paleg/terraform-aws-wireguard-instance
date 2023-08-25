@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "2.2",
+  "description": "Example",
+  "parameters": {},
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "ReconfigureWireguardPeers",
+      "precondition": {
+        "StringEquals": [
+          "platformType",
+          "Linux"
+        ]
+      },
+      "inputs": {
+        "runCommand": [
+          "echo \"=======> $(date): updating wireguard peers start\" >>/tmp/wireguard_update_peers.log 2>&1",
+          "echo \"secret versionId = $(AWS_DEFAULT_REGION=${aws_region} aws secretsmanager get-secret-value --secret-id ${server_conf_secret_name} --query VersionId --output text)\" >>/tmp/wireguard_update_peers.log 2>&1",
+          "AWS_DEFAULT_REGION=${aws_region} aws secretsmanager get-secret-value --secret-id ${server_conf_secret_name} --query SecretString --output text >${server_conf_path} 2>>/tmp/wireguard_update_peers.log",
+          "wg syncconf wg0 ${server_conf_path} >>/tmp/wireguard_update_peers.log 2>&1",
+          "echo \"=======> $(date): updating wireguard peers done\" >>/tmp/wireguard_update_peers.log 2>&1"
+        ]
+      }
+    }
+  ]
+}
