@@ -33,7 +33,7 @@ variable "enabled" {
 
 variable "ami_owner" {
   type    = string
-  default = "903794441882"
+  default = "amazon"
 }
 
 variable "instances" {
@@ -43,11 +43,11 @@ variable "instances" {
   }))
   default = {
     arm64 : {
-      ami_filter : "debian-11-arm64-*"
+      ami_filter : "debian-11-arm64-2023*"
       instance_types : ["t4g.nano"]
     }
     amd64 : {
-      ami_filter : "debian-11-amd64-*"
+      ami_filter : "debian-11-amd64-2023*"
       instance_types : ["t3.nano"]
     }
   }

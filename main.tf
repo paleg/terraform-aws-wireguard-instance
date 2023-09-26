@@ -78,12 +78,6 @@ resource "aws_launch_template" "_" {
   }
 
   user_data = data.cloudinit_config.this.rendered
-
-  lifecycle {
-    ignore_changes = [
-      image_id,
-    ]
-  }
 }
 
 resource "aws_autoscaling_group" "this" {
